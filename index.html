@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Как заминировать собственный стул</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=792, user-scalable=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <link rel="stylesheet" href="shower/themes/shower-bright/styles/screen.css">
+
+    <style>
+        .slide.shout.dark {
+            background-color: #000;
+        }
+
+        .slide.shout.golden {
+            background-color: #fd3;
+        }
+
+        .slide.shout.golden h2 {
+            color: #333;
+        }
+
+        .slide.shout h2 {
+            right: 0;
+        }
+    </style>
+</head>
+<body class="list">
+
+<header class="caption">
+    <h1>Как заминировать собственный стул</h1>
+
+    <p><a href="https://twitter.com/antonrychkov" target="_blank">Антон Рычков</a> для <a href="http://dump-conf.ru" target="_blank">DUMP</a> 2017</p>
+</header>
+
+<section class="slide">
+    <div>
+        <img src="pictures/gitlab.png" style="width: 700px;">
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Как устроен сервис</h2>
+    </div>
+</section>
+
+<section class="slide" style="text-align: center;">
+    <div>
+        <img src="pictures/documents.png">
+    </div>
+</section>
+
+<section class="slide">
+    <div>
+        <h2>CompanyRepository</h2>
+        <pre>
+            <code>public IEnumerable&lt;Company&gt; FindByInn(string inn) {</code>
+            <code>    return mongoCollection.AsQueryable()</code>
+            <code>        .Where(company => company.Inn == inn)</code>
+            <code>        .Select(<mark class="important">Prepare</mark>);</code>
+            <code>}</code>
+            <code><mark class="comment">// И ещё много более сложных запросов</mark></code>
+        </pre>
+    </div>
+</section>
+
+<section class="slide">
+    <div>
+        <h2>CompanyRepository</h2>
+        <pre>
+            <code>public void Save(Company company) {</code>
+            <code>    collection.Save(<mark class="important">PrepareSave</mark>(company));</code>
+            <code>}</code>
+        </pre>
+    </div>
+</section>
+
+<section class="slide">
+    <div>
+        <h2>Вычисление данных</h2>
+        <pre>
+            <code><mark class="comment">// Stored храним в базе данных, Calculated вычисляем</mark></code>
+            <code>Stored<sub>0</sub> + Calculated<sub>0</sub> = <mark class="important">Prepare</mark>    (Stored<sub>0</sub>)</code>
+            <code>Stored<sub>1</sub> + Calculated<sub>1</sub> = Process     (Stored<sub>0</sub> + Calculated<sub>0</sub>)</code>
+            <code>Stored<sub>2</sub>               = <mark class="important">PrepareSave</mark>(Stored<sub>1</sub> + Calculated<sub>1</sub>)</code>
+        </pre>
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Зачем<br>вычислять?</h2>
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>#1.<br>Дублирующиеся данные</h2>
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>#2.<br>Циклические ссылки</h2>
+    </div>
+</section>
+
+<section class="slide cover">
+    <div>
+        <img src="pictures/document-with-checks.png">
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Однажды...</h2>
+    </div>
+</section>
+
+<section class="slide">
+    <div>
+        <h2>CompanyRepository</h2>
+        <pre>
+            <code>public IEnumerable&lt;Company&gt; FindAll()</code>
+            <code>    return mongoCollection.FindAll();</code>
+            <code>}</code>
+        </pre>
+    </div>
+</section>
+<!-- TODO: Добавить подсветку синтаксиса -->
+
+<section class="slide cover">
+    <div>
+        <img src="pictures/hmm.png">
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Код-ревью</h2>
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Тестирование</h2>
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>И в продакшн!</h2>
+    </div>
+</section>
+
+<section class="slide cover">
+    <div>
+        <img src="pictures/document-without-checks.png">
+    </div>
+</section>
+
+<section class="slide">
+    <div>
+        <h2><span class="strikethrough">Сломанное</span> вычисление данных</h2>
+        <pre>
+            <code><mark class="comment">// Stored храним в базе данных, Calculated вычисляем</mark></code>
+            <code>Stored<sub>0</sub> + <mark class="important strikethrough">Calculated<sub>0</sub></mark> =              Stored<sub>0</sub></code>
+            <code>Stored<sub>1</sub> + <mark class="important strikethrough">Calculated<sub>1</sub></mark> = Process     (Stored<sub>0</sub> + Calculated<sub>0</sub>)</code>
+            <code><mark class="important strikethrough">Stored<sub>2</sub></mark>             <sub> </sub> = <mark class="important">PrepareSave</mark>(Stored<sub>1</sub> + Calculated<sub>1</sub>)</code>
+        </pre>
+    </div>
+
+    <style>
+        .hidden {
+            opacity: 0;
+        }
+
+        .strikethrough {
+            background-color: #f66 !important;
+            color: #fff;
+            padding-left: .2em !important;
+            padding-right: .2em !important;
+        }
+    </style>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Кто виноват?</h2>
+    </div>
+</section>
+
+<section class="slide cover">
+    <div>
+        <img src="pictures/bender.png" width="1024">
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Бэкапов нет</h2>
+    </div>
+</section>
+
+<section class="slide shout dark">
+    <div>
+        <h2>Пострадало<br>4530 компаний</h2>
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>#1. MS SQL</h2>
+    </div>
+</section>
+
+<section class="slide shout dark">
+    <div>
+        <h2>Осталось<br>2170 компаний</h2>
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>#2. pisa.exe</h2>
+    </div>
+</section>
+
+<section class="slide cover">
+    <div>
+        <img src="pictures/pdf.png">
+    </div>
+</section>
+
+<section class="slide cover">
+    <div>
+        <img src="pictures/tmp.png">
+    </div>
+</section>
+
+<section class="slide shout dark">
+    <div>
+        <h2>Осталось<br>150 компаний</h2>
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>#3. Эксперты</h2>
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Посылаем<br>150 писем</h2>
+    </div>
+</section>
+
+<section class="slide cover">
+    <div>
+        <img src="pictures/letter.png">
+    </div>
+</section>
+
+<section class="slide" style="text-align: center;">
+    <div>
+        <img src="pictures/we1.png" style="width: 500px">
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Два письма<br>и два звонка</h2>
+    </div>
+</section>
+
+<section class="slide cover">
+    <div>
+        <img src="pictures/answer-1.png">
+    </div>
+</section>
+
+<section class="slide cover">
+    <div>
+        <img src="pictures/answer-2.png">
+    </div>
+</section>
+
+<section class="slide shout">
+    <div>
+        <h2>Чему мы научились</h2>
+    </div>
+</section>
+
+<section class="slide shout golden">
+    <div>
+        <h2>Избыточность<br>данных</h2>
+    </div>
+</section>
+
+<section class="slide shout golden">
+    <div>
+        <h2>Отдайте бэкапы<br>админами</h2>
+    </div>
+</section>
+
+<section class="slide shout golden">
+    <div>
+        <h2  style="text-align: center; left: 0; right: 0;">Функциональные<br>тесты<br>≠<br>уверенность</h2>
+    </div>
+</section>
+
+<section class="slide shout golden">
+    <div>
+        <h2>Рассказывайте<br>о фейлах</h2>
+    </div>
+</section>
+
+<section class="slide" style="text-align: center;">
+    <div>
+        <img src="pictures/we2.png" style="width: 500px">
+    </div>
+</section>
+
+<section class="slide shout" id="me">
+    <div>
+        <h2><a href="https://twitter.com/antonrychkov" target="_blank">@antonrychkov</a></h2>
+    </div>
+
+    <div>
+        <img src="pictures/logo-skb-kontur-white.png">
+    </div>
+
+    <style>
+        #me a {
+            background-image: none;
+        }
+
+        #me h2 {
+            text-align: center;
+            left: 0;
+            right: 0;
+        }
+
+        #me div {
+            text-align: center;
+        }
+
+        #me img {
+            padding-top: 400px;
+        }
+    </style>
+</section>
+
+<div class="progress">
+    <div></div>
+</div>
+
+<script src="shower/shower.min.js"></script>
+
+</body>
+</html>
